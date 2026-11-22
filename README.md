@@ -10,12 +10,12 @@ Network chunks do not respect UTF-8 code points, CRLF pairs, SSE lines, or event
 
 ### Components
 
-- \`src/sse.ts\`: strict, bounded byte-incremental SSE parser. Handles arbitrary fragmentation, CRLF, BOM, comments, IDs, retry fields, UTF-8 validation, and maximum line/event sizes.
-- \`src/normalizer.ts\`: narrow mapping from OpenAI Responses, Anthropic Messages, and OpenAI-compatible Chat Completions to a renderer-neutral text-event vocabulary.
-- \`src/epoch.ts\`: per-session monotonically increasing epoch ownership and terminal-state fencing.
-- \`src/dispatch.ts\`: bounded FIFO worker-dispatch coordinator with per-session supersession, AbortSignal cancellation, task-ID deduplication, retry policy, and queue backpressure.
-- \`test/sse.test.mjs\`: adversarial split-boundary, deterministic fragmentation, malformed input, and late-arrival tests.
-- \`test/dispatch.test.mjs\`: deterministic worker-executor regressions for concurrency limits, FIFO draining, stale completion fencing, duplicate delivery, retry classification, cancellation, queue saturation, and session isolation.
+- `src/sse.ts`: strict, bounded byte-incremental SSE parser. Handles arbitrary fragmentation, CRLF, BOM, comments, IDs, retry fields, UTF-8 validation, and maximum line/event sizes.
+- `src/normalizer.ts`: narrow mapping from OpenAI Responses, Anthropic Messages, and OpenAI-compatible Chat Completions to a renderer-neutral text-event vocabulary.
+- `src/epoch.ts`: per-session monotonically increasing epoch ownership and terminal-state fencing.
+- `src/dispatch.ts`: bounded FIFO worker-dispatch coordinator with per-session supersession, AbortSignal cancellation, task-ID deduplication, retry policy, and queue backpressure.
+- `test/sse.test.mjs`: adversarial split-boundary, deterministic fragmentation, malformed input, and late-arrival tests.
+- `test/dispatch.test.mjs`: deterministic worker-executor regressions for concurrency limits, FIFO draining, stale completion fencing, duplicate delivery, retry classification, cancellation, queue saturation, and session isolation.
 
 The dispatch coordinator accepts an injected executor. The regression suite uses controlled Promise-based executors to deterministically force race conditions; it does **not** claim to launch a browser Worker or exercise a production Orye runtime.
 
@@ -23,11 +23,11 @@ The dispatch coordinator accepts an injected executor. The regression suite uses
 
 Requires Node.js >=22.
 
-\`\`\`bash
+```bash
 npm install
 npm test
 npm run check
-\`\`\`
+```
 
 ## Test scenarios
 
@@ -57,7 +57,7 @@ npm run check
 
 ## Architecture
 
-\`\`\`text
+```text
 Untrusted chunk boundaries
           |
           v
@@ -78,7 +78,7 @@ Current session result only --stale completion--> discard
           |
           v
 UI-visible text / terminal state
-\`\`\`
+```
 
 ## License
 
