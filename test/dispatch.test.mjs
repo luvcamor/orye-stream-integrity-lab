@@ -156,3 +156,34 @@ test("sessions do not supersede one another", async () => {
   gates.get("right").resolve("R");
   assert.deepEqual(await Promise.all([left, right]), ["L", "R"]);
 });
+
+test("a delayed retry also obeys queue backpressure", async () => {
+  const blockerGate = deferred();
+  const queuedGate = deferred();
+  let retryAttempts = 0;
+  const dispatcher = new WorkerDispatcher(task => {
+    if (task.id === "retrying") {
+      retryAttempts += 1;
+      if (retryAttempts === 1) throw Object.assign(new Error("temporary"), { retryable: true });
+      return "unexpected retry";
+    }
+    if (task.id === "blocker") return blockerGate.promise;
+    return queuedGate.promise;
+  }, {
+    concurrency: 1,
+    maxQueue: 1,
+    maxAttempts: 2,
+    retryDelayMs: 10,
+    shouldRetry: error => error?.retryable === true,
+  });
+
+  const retrying = dispatcher.submit({ id: "retrying", session: "retry-session", payload: null });
+  await tick();
+  const blocker = dispatcher.submit({ id: "blocker", session: "blocker-session", payload: null });
+  const queued = dispatcher.submit({ id: "queued", session: "queued-session", payload: null });
+  await assert.rejects(retrying, QueueFullError);
+  assert.equal(retryAttempts, 1);
+  blockerGate.resolve("blocker done");
+  queuedGate.resolve("queued done");
+  assert.deepEqual(await Promise.all([blocker, queued]), ["blocker done", "queued done"]);
+});
