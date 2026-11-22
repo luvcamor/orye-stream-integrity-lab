@@ -211,6 +211,9 @@ export class WorkerDispatcher<TPayload, TResult> {
     if (record.settled) return;
     record.settled = true;
     record.state = state;
+    if (this.currentBySession.get(record.task.session) === record) {
+      this.currentBySession.delete(record.task.session);
+    }
     if (record.retryTimer !== null) {
       clearTimeout(record.retryTimer);
       record.retryTimer = null;
@@ -278,8 +281,12 @@ export class WorkerDispatcher<TPayload, TResult> {
       record.retryTimer = setTimeout(() => {
         record.retryTimer = null;
         if (!record.settled && this.isCurrent(record)) {
-          record.state = "queued";
-          this.queue.push(record);
+          if (this.active >= this.options.concurrency && this.queue.length >= this.maxQueue) {
+            this.settle(record, "failed", new QueueFullError(), true);
+          } else {
+            record.state = "queued";
+            this.queue.push(record);
+          }
           this.pump();
         }
       }, this.retryDelayMs);
